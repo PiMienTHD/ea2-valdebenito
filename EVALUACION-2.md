@@ -1,5 +1,4 @@
 # Asistente de Clima EA2
-# Asistente de Clima EA2
 
 **Autor:** Adrian Valdebenito
 **Asignatura:** Programación y Redes Virtualizadas (SDN-NFV)
