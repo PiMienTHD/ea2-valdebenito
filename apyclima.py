@@ -12,7 +12,7 @@ def consultar_clima():
             break
 
         # Tu API Key (ya corregida)
-        api_key = "72caa147440ee6d5e4366225504cae47"
+        api_key = "52bf3136125511e0457bcd5997947e69"
 
         # ① ZONA AZUL — Construcción de la solicitud
         url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={api_key}&units=metric&lang=es"
