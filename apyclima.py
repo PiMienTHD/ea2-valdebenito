@@ -65,10 +65,10 @@ def consultar_clima():
                 print(f"❌ Error 404: La ciudad '{ciudad.title()}' no existe. Revisa si la escribiste bien.")
             elif respuesta.status_code == 401:
                 print("❌ Error 401: API Key inválida. Revisa tu clave en OpenWeatherMap.")
-            elif codigo == 429:
+            elif respuesta.status_code == 429:
                 print("❌ Error 429: Límite de consultas excedido. Espera un momento y vuelve a intentar.\n")
-            elif codigo >= 500:
-                print(f"❌ Error {codigo}: Los servidores de OpenWeatherMap están caídos. Intenta más tarde.\n")
+            elif respuesta.status_code >= 500:
+                print(f"❌ Error {respuesta}: Los servidores de OpenWeatherMap están caídos. Intenta más tarde.\n")
             else:
                 print(f"⚠️ Error inesperado: El servidor devolvió el código HTTP {respuesta.status_code}.")
 
