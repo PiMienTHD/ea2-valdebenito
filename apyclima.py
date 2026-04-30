@@ -11,7 +11,6 @@ def consultar_clima():
             print("¡Nos vemos! Saliendo del programa...")
             break
 
-        # Tu API Key (ya corregida)
         api_key = "52bf3136125511e0457bcd5997947e69"
 
         # ① ZONA AZUL — Construcción de la solicitud
