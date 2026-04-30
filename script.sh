@@ -25,3 +25,7 @@ docker build -t ea2-clima .
 echo "[+] 5. ¡Ejecutando tu Asistente de Clima!"
 echo "------------------------------------------------"
 docker run -it --name clima-ejecucion ea2-clima
+echo "------------------------------------------------"
+
+echo "[+] 6. Mostrando el estado final de los contenedores..."
+docker ps -a
