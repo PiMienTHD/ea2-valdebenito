@@ -1,38 +1,30 @@
 #!/bin/bash
 
 # ==============================================================================
-# SCRIPT BUILD.SH (Automatización Total CI/CD)
+# SCRIPT DE DESPLIEGUE Y GENERACIÓN DE EVIDENCIAS (NO AUTODESTRUCTIVO)
 # ==============================================================================
 
 echo "======================================================="
-echo " Construcción Automatizada del Asistente Climático"
+echo "   INICIANDO DESPLIEGUE DESDE GITHUB"
 echo "======================================================="
 
-# 1. Solicita las variables de forma interactiva
-echo -n "🔑 Pega tu API Key de OpenWeather (invisible por seguridad): "
+# 1. Solicitar API Key de forma segura
+echo -n "🔑 Pega tu API Key de OpenWeather: "
 read -s API_KEY_PROYECTO
-echo "" # Salto de línea
+echo ""
 export API_KEY_PROYECTO
 
-echo -n "🌍 Ingresa la ciudad a consultar (Ej: Paris, Tokyo) o presiona Enter para Santiago: "
-read CIUDAD_INGRESADA
-# Si el usuario no escribe nada, usamos Santiago por defecto
-export CIUDAD="${CIUDAD_INGRESADA:-Santiago}"
-
-# 2. Limpieza y Descarga desde GitHub (El "hacer todo")
-echo -e "\n[-] 1. Preparando entorno de trabajo..."
-# Nos movemos a una carpeta temporal para que la descarga sea limpia
-cd /tmp 
-rm -rf ea2-valdebenito 2>/dev/null || true
-docker rm -f clima-ejecucion 2>/dev/null || true
-docker rmi -f ea2-clima 2>/dev/null || true
-
-echo "[+] 2. Descargando código fuente desde GitHub..."
+# 2. Clonar el repositorio (Sin borrar después)
+echo "[+] 1. Clonando repositorio en la carpeta actual..."
+# Usamos un nombre de carpeta fijo para que sea fácil de encontrar
 git clone https://github.com/PiMienTHD/ea2-valdebenito.git
 cd ea2-valdebenito
 
-# 3. Creación del Dockerfile automatizado
-echo "[+] 3. Generando Dockerfile..."
+# 3. Crear carpeta de evidencias (Requisito de la pauta)
+mkdir -p evidencias/docker
+
+# 4. Generar Dockerfile dinámico (Para asegurar que sea el correcto)
+echo "[+] 2. Generando Dockerfile..."
 cat << 'EOF' > Dockerfile
 FROM python:3.9-slim
 WORKDIR /app
@@ -41,16 +33,27 @@ COPY app.py .
 CMD ["python", "app.py"]
 EOF
 
-# 4. Construcción de la imagen
-echo "[+] 4. Construyendo infraestructura con Docker..."
+# 5. Construcción de la imagen
+echo "[+] 3. Construyendo imagen ea2-clima..."
 docker build -t ea2-clima .
 
-# 5. Ejecución con inyección de variables
-echo "[+] 5. Ejecutando el Asistente de Clima..."
-echo "------------------------------------------------"
-docker run --name clima-ejecucion -e API_KEY_PROYECTO="$API_KEY_PROYECTO" -e CIUDAD="$CIUDAD" ea2-clima
-echo "------------------------------------------------"
+# 6. Ejecución y Logs
+echo "[+] 4. Ejecutando contenedor..."
+docker rm -f clima-ejecucion 2>/dev/null || true
+docker run --name clima-ejecucion -e API_KEY_PROYECTO="$API_KEY_PROYECTO" -e CIUDAD="Santiago" ea2-clima
 
-# 6. Evidencia final
-echo "[+] 6. Estado final del contenedor:"
-docker ps -a | grep clima-ejecucion
+# 7. Captura de Evidencias para el entregable
+echo "[+] 5. Generando archivo evidencias/docker/output.txt..."
+
+# Estado del contenedor (debe decir Exited 0[cite: 1])
+docker ps -a --filter "name=clima-ejecucion" > evidencias/docker/output.txt
+
+# Logs con los datos reales de la API[cite: 1]
+echo -e "\n--- DATOS REALES OBTENIDOS DE LA API ---" >> evidencias/docker/output.txt
+docker logs clima-ejecucion >> evidencias/docker/output.txt
+
+echo "======================================================="
+echo " ✅ ¡LISTO! La carpeta 'ea2-valdebenito' ha sido creada."
+echo " Todos los archivos y evidencias están guardados dentro."
+echo " No se borró nada para que puedas revisar el contenido."
+echo "======================================================="
