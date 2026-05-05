@@ -1,39 +1,47 @@
-# Asistente de Clima EA2
+# Asistente Climático Automatizado para Gestión Inmobiliaria (CI/CD)
 
-**Autor:** Adrian Valdebenito
-**Asignatura:** Programación y Redes Virtualizadas (SDN-NFV)
+## 1. Definición del Contexto y Narrativa
+* **Stakeholder:** *Facility Manager* (Administrador de Infraestructura y Edificios Corporativos).
+* **Propuesta de Valor (Problema/Solución):** El administrador necesita monitorear variables climáticas críticas (temperatura y humedad) en tiempo real en Santiago para gestionar proactivamente los sistemas HVAC (Calefacción, Ventilación y Aire Acondicionado) que enfrían los cuartos de servidores. Esta aplicación resuelve el problema extrayendo y procesando dichos datos desde una API externa de forma puntual y automatizada, evitando la condensación en los equipos y optimizando el consumo energético del edificio.
 
-## Descripción General
-Este proyecto consiste en un script de Python que interactúa con la API de OpenWeatherMap para consultar el clima de distintas ciudades. La aplicación ha sido empaquetada utilizando Docker y automatizada mediante un pipeline de Integración Continua (CI) en Jenkins.
+## 2. Requisitos Previos (Obtención de API Key)
+Por políticas estrictas de ciberseguridad y mejores prácticas DevSecOps, **este repositorio no expone credenciales ni llaves de acceso en su código fuente**. 
 
-## Cómo Ejecutar la Aplicación 🚀
-Para ejecutar este proyecto de forma local utilizando contenedores, debes tener instalado Docker. Abre tu terminal y ejecuta los siguientes comandos:
+Para ejecutar esta herramienta, el usuario u orquestador debe proveer su propia llave de la API de OpenWeather:
+1. Ingrese a [OpenWeatherMap](https://openweathermap.org/) y cree una cuenta gratuita.
+2. Diríjase a su perfil y seleccione la pestaña **"My API Keys"**.
+3. Genere una nueva llave y cópiela.
 
-1. **Construir la imagen de Docker:**
-   `docker build -t ea2-clima .`
+## 3. Guía de Configuración (Variables de Entorno)
+Antes de ejecutar la aplicación o lanzar el pipeline en Jenkins, es **estrictamente obligatorio** configurar la llave obtenida en el paso anterior como una variable de entorno en su sistema. El programa buscará específicamente la variable `API_KEY_PROYECTO`.
 
-2. **Ejecutar el contenedor (modo interactivo):**
-   `docker run -it ea2-clima`
+**En sistemas Linux (Bash / Ubuntu / Debian):**
+\`\`\`bash
+export API_KEY_PROYECTO="pegue_su_llave_aqui"
+\`\`\`
 
-El programa te pedirá que ingreses el nombre de una ciudad. Para salir, simplemente escribe "salir".
+**En sistemas Windows (PowerShell):**
+\`\`\`powershell
+$env:API_KEY_PROYECTO="pegue_su_llave_aqui"
+\`\`\`
 
----
+## 4. Instrucciones de Ejecución
+Este proyecto utiliza Docker para asegurar que el entorno de ejecución sea idéntico en cualquier máquina. Cuenta con un script principal de automatización (`build.sh`) que gestiona todo el ciclo de vida del contenedor.
 
-## Registro de Errores y Soluciones Documentadas (CI/CD)
-Durante el desarrollo e implementación en la máquina virtual (LabVM), se detectaron y resolvieron los siguientes incidentes técnicos:
+Una vez configurada la variable de entorno, siga estos pasos en la raíz del proyecto:
 
-* **1. Error de Hilos (Threads) en pip:**
-  * **Error:** `RuntimeError: can't start new thread` durante la instalación de dependencias en Docker.
-  * **Solución:** Se añadió el flag `--progress-bar off` al comando `pip install` en el Dockerfile para evitar el bloqueo de subprocesos de la LabVM.
+1. Otorgue permisos de ejecución al script:
+   \`\`\`bash
+   chmod +x build.sh
+   \`\`\`
+2. Ejecute la automatización:
+   \`\`\`bash
+   ./build.sh
+   \`\`\`
 
-* **2. Colisión de Puertos en Jenkins:**
-  * **Error:** `bind: address already in use` en el puerto `8080`.
-  * **Solución:** Se detuvo y deshabilitó el servicio local de Jenkins nativo en Linux (`systemctl stop jenkins`) para liberar el puerto para el contenedor Docker.
-
-* **3. Restricciones de Permisos en Jenkins (EPERM):**
-  * **Error:** Java falló al iniciar hilos (`EPERM`) debido a políticas de la máquina anfitriona.
-  * **Solución:** Se ejecutó el contenedor Docker de Jenkins con el parámetro `--privileged` y un volumen de datos nuevo.
-
-* **4. Error de Rama y Archivo en Jenkins:**
-  * **Error:** `Couldn't find any revision to build` y fallo al copiar script.
-  * **Solución:** Se actualizó la rama origen a `*/main` en la configuración de Jenkins y se estandarizó el nombre del archivo principal a `apyclima.py`.
+El script realizará las siguientes acciones de forma desatendida:
+* Limpieza de contenedores previos.
+* Generación del `Dockerfile`.
+* Construcción de la imagen Docker (`ea2-clima`).
+* Ejecución de la consulta puntual, inyectando de forma segura la credencial al contenedor.
+* Impresión del reporte climático final por consola.
