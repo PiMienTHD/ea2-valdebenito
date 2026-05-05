@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # ==============================================================================
-# SCRIPT DE DESPLIEGUE Y GENERACIÓN DE EVIDENCIAS (NO AUTODESTRUCTIVO)
+# SCRIPT DE DESPLIEGUE INTERACTIVO Y GENERACIÓN DE EVIDENCIAS
 # ==============================================================================
 
 echo "======================================================="
-echo "   INICIANDO DESPLIEGUE DESDE GITHUB"
+echo "   CONFIGURACIÓN DEL ASISTENTE CLIMÁTICO"
 echo "======================================================="
 
 # 1. Solicitar API Key de forma segura
@@ -14,17 +14,21 @@ read -s API_KEY_PROYECTO
 echo ""
 export API_KEY_PROYECTO
 
-# 2. Clonar el repositorio (Sin borrar después)
-echo "[+] 1. Clonando repositorio en la carpeta actual..."
-# Usamos un nombre de carpeta fijo para que sea fácil de encontrar
+# 2. Solicitar la CIUDAD al usuario (Lo que faltaba)
+echo -n "🌍 ¿Qué ciudad deseas consultar? (Ej: Paris, Tokyo, Concepcion): "
+read CIUDAD_USUARIO
+export CIUDAD="$CIUDAD_USUARIO"
+
+# 3. Clonar el repositorio
+echo -e "\n[+] 1. Descargando repositorio desde GitHub..."
 git clone https://github.com/PiMienTHD/ea2-valdebenito.git
 cd ea2-valdebenito
 
-# 3. Crear carpeta de evidencias (Requisito de la pauta)
+# 4. Crear carpetas de evidencia
 mkdir -p evidencias/docker
 
-# 4. Generar Dockerfile dinámico (Para asegurar que sea el correcto)
-echo "[+] 2. Generando Dockerfile..."
+# 5. Generar Dockerfile dinámico[cite: 1]
+echo "[+] 2. Preparando Dockerfile..."
 cat << 'EOF' > Dockerfile
 FROM python:3.9-slim
 WORKDIR /app
@@ -33,27 +37,32 @@ COPY app.py .
 CMD ["python", "app.py"]
 EOF
 
-# 5. Construcción de la imagen
-echo "[+] 3. Construyendo imagen ea2-clima..."
+# 6. Construcción e Inyección de Variables[cite: 1]
+echo "[+] 3. Construyendo imagen Docker..."
 docker build -t ea2-clima .
 
-# 6. Ejecución y Logs
-echo "[+] 4. Ejecutando contenedor..."
+echo "[+] 4. Ejecutando consulta para $CIUDAD..."
 docker rm -f clima-ejecucion 2>/dev/null || true
-docker run --name clima-ejecucion -e API_KEY_PROYECTO="$API_KEY_PROYECTO" -e CIUDAD="Santiago" ea2-clima
 
-# 7. Captura de Evidencias para el entregable
-echo "[+] 5. Generando archivo evidencias/docker/output.txt..."
+# Ejecutamos pasando AMBAS variables al contenedor[cite: 1]
+docker run --name clima-ejecucion \
+  -e API_KEY_PROYECTO="$API_KEY_PROYECTO" \
+  -e CIUDAD="$CIUDAD" \
+  ea2-clima
 
-# Estado del contenedor (debe decir Exited 0[cite: 1])
+# 7. Captura de Evidencias obligatorias[cite: 1]
+echo -e "\n[+] 5. Guardando evidencias en evidencias/docker/output.txt..."
+
+# Estado del contenedor (debe decir Exited 0)[cite: 1]
 docker ps -a --filter "name=clima-ejecucion" > evidencias/docker/output.txt
 
-# Logs con los datos reales de la API[cite: 1]
-echo -e "\n--- DATOS REALES OBTENIDOS DE LA API ---" >> evidencias/docker/output.txt
+# Logs con los datos reales de la ciudad elegida[cite: 1]
+echo -e "\n--- DATOS REALES PARA LA CIUDAD: $CIUDAD ---" >> evidencias/docker/output.txt
 docker logs clima-ejecucion >> evidencias/docker/output.txt
 
 echo "======================================================="
-echo " ✅ ¡LISTO! La carpeta 'ea2-valdebenito' ha sido creada."
-echo " Todos los archivos y evidencias están guardados dentro."
-echo " No se borró nada para que puedas revisar el contenido."
+echo " ✅ PROCESO EXITOSO"
+echo " Ciudad consultada: $CIUDAD"
+echo " La carpeta 'ea2-valdebenito' se mantiene intacta."
+echo " Revisa el archivo 'output.txt' para verificar tu nota."
 echo "======================================================="
