@@ -1,31 +1,21 @@
 #!/bin/bash
 
-echo "[-] Limpiando ejecuciones anteriores..."
-docker rm -f clima-ejecucion 2>/dev/null || true
-rm -rf ea2-valdebenito
+echo "[-] Deteniendo contenedores anteriores..."
+# Absorbe el error si no existe, igual que el pipeline
+docker rm -f clima-ejecucion 2>/dev/null || true 
 
-echo "[+] 1. Clonando tu repositorio oficial desde GitHub..."
-git clone https://github.com/PiMienTHD/ea2-valdebenito.git
-
-echo "[+] 2. Entrando a la carpeta del proyecto..."
-cd ea2-valdebenito
-
-echo "[+] 3. Generando el Dockerfile..."
+echo "[+] Generando Dockerfile..."
 cat << 'EOF' > Dockerfile
 FROM python:3.9-slim
 WORKDIR /app
 RUN pip install --progress-bar off requests
-COPY apyclima.py .
-CMD ["python3", "apyclima.py"]
+COPY app.py .
+CMD ["python", "app.py"]
 EOF
 
-echo "[+] 4. Construyendo la imagen de Docker..."
+echo "[+] Construyendo la imagen..."
 docker build -t ea2-clima .
 
-echo "[+] 5. ¡Ejecutando tu Asistente de Clima!"
-echo "------------------------------------------------"
-docker run -it --name clima-ejecucion ea2-clima
-echo "------------------------------------------------"
-
-echo "[+] 6. Mostrando el estado final de los contenedores..."
-docker ps -a
+echo "[+] Ejecutando contenedor (Consulta Puntual)..."
+# Pasamos la variable de entorno al contenedor para mantener la seguridad
+docker run --name clima-ejecucion -e API_KEY_PROYECTO="$API_KEY_PROYECTO" ea2-clima
