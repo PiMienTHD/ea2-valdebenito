@@ -1,0 +1,13 @@
+CONTAINER ID   IMAGE       COMMAND           CREATED         STATUS                              PORTS     NAMES
+812ef01d1e9b   ea2-clima   "python app.py"   2 seconds ago   Exited (0) Less than a second ago             clima-ejecucion
+
+--- DATOS REALES PARA LA CIUDAD: Santiago ---
+==================================================
+ REPORTE CLIMÁTICO PARA FACILITY MANAGEMENT
+==================================================
+Ciudad Consultada: SANTIAGO
+Condición Actual: muy nuboso
+Temperatura: 22.21°C
+Humedad Relativa: 34%
+==================================================
+~                                                    
