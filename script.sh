@@ -1,15 +1,14 @@
 #!/bin/bash
 
-# ==============================================================================
-# Script de Automatización CI/CD - Asistente Climático
-# ==============================================================================
+# Esta línea mágica mueve la terminal a la carpeta exacta donde está este script
+cd "$(dirname "$0")"
 
 echo "[-] 1. Limpiando ejecuciones y contenedores anteriores..."
-# Se usa '|| true' para que el script no falle si no hay contenedores previos
 docker rm -f clima-ejecucion 2>/dev/null || true
+# Forzamos la eliminación de la imagen corrupta anterior por si acaso
+docker rmi -f ea2-clima 2>/dev/null || true 
 
 echo "[+] 2. Generando Dockerfile automatizado..."
-# Esto crea el archivo Dockerfile en la misma carpeta donde se ejecuta el script
 cat << 'EOF' > Dockerfile
 FROM python:3.9-slim
 WORKDIR /app
@@ -23,10 +22,8 @@ docker build -t ea2-clima .
 
 echo "[+] 4. Ejecutando el Asistente de Clima..."
 echo "------------------------------------------------"
-# Se inyecta la variable de entorno de forma segura al contenedor
 docker run --name clima-ejecucion -e API_KEY_PROYECTO="$API_KEY_PROYECTO" ea2-clima
 echo "------------------------------------------------"
 
-echo "[+] 5. Verificando el estado final del contenedor (Debe decir 'Exited (0)')..."
-# Muestra el contenedor apagado exitosamente, tal como pide la evaluación
+echo "[+] 5. Verificando el estado final del contenedor..."
 docker ps -a | grep clima-ejecucion
