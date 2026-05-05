@@ -1,82 +1,59 @@
 import requests
+import os
+import sys
 
-def consultar_clima():
-    print("🌤️ ¡Bienvenido al Asistente de Clima y Vestimenta!")
-    
-    # El bucle permite buscar varias ciudades sin tener que reiniciar el programa
-    while True:
-        ciudad = input("\nIngresa una ciudad (ej. Santiago, Paris) o escribe 'salir': ").lower().strip()
+# La llave se lee de forma segura desde el sistema, NO está hardcodeada
+api_key = os.getenv('API_KEY_PROYECTO')
+# Definimos una ciudad estática para la consulta puntual automatizada
+ciudad = "Santiago" 
+
+if not api_key:
+    print("Error Crítico: La variable de entorno API_KEY_PROYECTO no está configurada.")
+    sys.exit(1) # Jenkins leerá esto como fallo en el pipeline
+
+url = f"http://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={api_key}&units=metric&lang=es"
+
+try:
+    respuesta = requests.get(url, timeout=10)
+    codigo = respuesta.status_code
+
+    if codigo == 200:
+        datos = respuesta.json()
+        # Procesamiento de 3 campos exigidos
+        clima = datos['weather'][0]['description']
+        temp = datos['main']['temp']
+        humedad = datos['main']['humidity']
         
-        if ciudad == 'salir':
-            print("¡Nos vemos! Saliendo del programa...")
-            break
+        print("==================================================")
+        print(" REPORTE CLIMÁTICO PARA FACILITY MANAGEMENT")
+        print("==================================================")
+        print(f"Ciudad Consultada: {ciudad}")
+        print(f"Condición Actual: {clima}")
+        print(f"Temperatura: {temp}°C")
+        print(f"Humedad Relativa: {humedad}%")
+        print("==================================================")
+        sys.exit(0) # Código de salida 0 para que Jenkins marque SUCCESS
 
-        api_key = "52bf3136125511e0457bcd5997947e69"
+    # Manejo robusto de 4+ errores
+    elif codigo == 401:
+        print("Error 401: API Key inválida o no autorizada.")
+        sys.exit(1)
+    elif codigo == 404:
+        print(f"Error 404: La ciudad '{ciudad}' no existe en la base de datos.")
+        sys.exit(1)
+    elif codigo == 429:
+        print("Error 429: Límite de consultas a la API excedido.")
+        sys.exit(1)
+    elif codigo >= 500:
+        print(f"Error {codigo}: Falla interna en los servidores de OpenWeather.")
+        sys.exit(1)
+    else:
+        print(f"Error HTTP inesperado. Código: {codigo}")
+        sys.exit(1)
 
-        # ① ZONA AZUL — Construcción de la solicitud
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={api_key}&units=metric&lang=es"
-
-        try:
-            # ② ZONA VERDE — Llamada HTTP
-            respuesta = requests.get(url, timeout=5)
-
-            # Evaluamos los posibles escenarios de respuesta del servidor
-            if respuesta.status_code == 200:
-                datos = respuesta.json()
-                
-                # ③ ZONA ROJA — Parseo y transformación del JSON
-                condicion = datos.get("weather", [{}])[0].get("description", "Desconocida")
-                
-                temperatura = datos.get("main", {}).get("temp", "?")
-                sensacion = datos.get("main", {}).get("feels_like", "?")
-                humedad = datos.get("main", {}).get("humidity", "?")
-                presion = datos.get("main", {}).get("pressure", "?")
-                viento = datos.get("wind", {}).get("speed", "?")
-                
-                # ④ ZONA MORADA — Formateo y salida al usuario
-                print(f"\n=== CLIMA EN {ciudad.upper()} ===")
-                print(f"☁️  Condición  : {condicion.capitalize()}")
-                print(f"🌡️  Temperatura: {temperatura}°C (Sensación térmica: {sensacion}°C)")
-                print(f"💧  Humedad    : {humedad}%")
-                print(f"📏  Presión    : {presion} hPa")
-                print(f"💨  Viento     : {viento} m/s")
-                
-                # --- LÓGICA DE SUGERENCIA DE VESTIMENTA ---
-                print("\n💡 Sugerencia de vestimenta:")
-                
-                # Chequeo de lluvia
-                if "lluvia" in condicion.lower() or "llovizna" in condicion.lower():
-                    print("   ☔ Extra: ¡Llévalo sí o sí! Paraguas o una chaqueta impermeable.")
-                    
-                # Recomendaciones por sensación térmica
-                if isinstance(sensacion, (int, float)):
-                    if sensacion < 10:
-                        print("   ❄️  Ropa: Parka gruesa, chaleco, bufanda y pantalones largos.")
-                    elif 10 <= sensacion < 18:
-                        print("   🧥  Ropa: Polerón o cortavientos, y jeans o buzo.")
-                    elif 18 <= sensacion <= 25:
-                        print("   👕  Ropa: Polera. Lleva un polerón ligero por si refresca.")
-                    else:
-                        print("   🩳  Ropa: Shorts, ropa fresca, lentes de sol y bloqueador.")
-            
-            # Manejo de errores HTTP específicos
-            elif respuesta.status_code == 404:
-                print(f"❌ Error 404: La ciudad '{ciudad.title()}' no existe. Revisa si la escribiste bien.")
-            elif respuesta.status_code == 401:
-                print("❌ Error 401: API Key inválida. Revisa tu clave en OpenWeatherMap.")
-            elif respuesta.status_code == 429:
-                print("❌ Error 429: Límite de consultas excedido. Espera un momento y vuelve a intentar.\n")
-            elif respuesta.status_code >= 500:
-                print(f"❌ Error {respuesta}: Los servidores de OpenWeatherMap están caídos. Intenta más tarde.\n")
-            else:
-                print(f"⚠️ Error inesperado: El servidor devolvió el código HTTP {respuesta.status_code}.")
-
-        # Manejo de errores de red o conexión
-        except requests.exceptions.ConnectionError:
-            print("🔌 Error de Red: Sin internet o no se pudo conectar al servidor.")
-        except requests.exceptions.Timeout:
-            print("⏱️ Timeout: El servidor tardó más de 5 segundos en responder.")
-
-# Ejecutamos la función principal
-if __name__ == "__main__":
-    consultar_clima()
+except requests.exceptions.ConnectionError:
+    print("Error de Conexión: El contenedor no tiene acceso a Internet.")
+    sys.exit(1)
+except requests.exceptions.Timeout:
+    print("Error de Timeout: La API tardó demasiado en responder.")
+    sys.exit(1)
