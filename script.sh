@@ -1,21 +1,24 @@
 #!/bin/bash
 
-echo "[-] Deteniendo contenedores anteriores..."
-# Absorbe el error si no existe, igual que el pipeline
-docker rm -f clima-ejecucion 2>/dev/null || true 
+echo "===================================================="
+echo "   Iniciando Despliegue Automatizado desde GitHub   "
+echo "===================================================="
 
-echo "[+] Generando Dockerfile..."
-cat << 'EOF' > Dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-RUN pip install --progress-bar off requests
-COPY app.py .
-CMD ["python", "app.py"]
-EOF
+# 1. El script te pide la llave de forma interactiva y segura
+read -p "Por favor, ingresa tu API Key de OpenWeather: " llave_ingresada
+export API_KEY_PROYECTO="$llave_ingresada"
 
-echo "[+] Construyendo la imagen..."
-docker build -t ea2-clima .
+# 2. Limpieza de pruebas anteriores
+echo -e "\n[-] Limpiando entorno..."
+rm -rf ea2-valdebenito
+docker rm -f clima-ejecucion 2>/dev/null || true
 
-echo "[+] Ejecutando contenedor (Consulta Puntual)..."
-# Pasamos la variable de entorno al contenedor para mantener la seguridad
-docker run --name clima-ejecucion -e API_KEY_PROYECTO="$API_KEY_PROYECTO" ea2-clima
+# 3. Descarga del código fuente (Lo mismo que hará Jenkins)
+echo "[+] Clonando repositorio oficial..."
+git clone https://github.com/PiMienTHD/ea2-valdebenito.git
+
+# 4. Ejecución del script de construcción interno
+echo "[+] Construyendo infraestructura con Docker..."
+cd ea2-valdebenito
+chmod +x build.sh
+./build.sh
