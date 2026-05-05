@@ -1,0 +1,12 @@
+# Variables de entorno y secretos
+.env
+secretos/
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Carpetas de evidencias locales (para no subir basura accidentalmente)
+output.txt
+*.png
+*.jpg
