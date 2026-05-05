@@ -2,14 +2,13 @@ import requests
 import os
 import sys
 
-# La llave se lee de forma segura desde el sistema, NO está hardcodeada
+# La llave y la ciudad se leen desde el entorno. Si no hay ciudad, usa Santiago por defecto.
 api_key = os.getenv('API_KEY_PROYECTO')
-# Definimos una ciudad estática para la consulta puntual automatizada
-ciudad = "Santiago" 
+ciudad = os.getenv('CIUDAD', 'Santiago')
 
 if not api_key:
     print("Error Crítico: La variable de entorno API_KEY_PROYECTO no está configurada.")
-    sys.exit(1) # Jenkins leerá esto como fallo en el pipeline
+    sys.exit(1)
 
 url = f"http://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={api_key}&units=metric&lang=es"
 
@@ -19,7 +18,6 @@ try:
 
     if codigo == 200:
         datos = respuesta.json()
-        # Procesamiento de 3 campos exigidos
         clima = datos['weather'][0]['description']
         temp = datos['main']['temp']
         humedad = datos['main']['humidity']
@@ -27,14 +25,13 @@ try:
         print("==================================================")
         print(" REPORTE CLIMÁTICO PARA FACILITY MANAGEMENT")
         print("==================================================")
-        print(f"Ciudad Consultada: {ciudad}")
+        print(f"Ciudad Consultada: {ciudad.upper()}")
         print(f"Condición Actual: {clima}")
         print(f"Temperatura: {temp}°C")
         print(f"Humedad Relativa: {humedad}%")
         print("==================================================")
-        sys.exit(0) # Código de salida 0 para que Jenkins marque SUCCESS
+        sys.exit(0)
 
-    # Manejo robusto de 4+ errores
     elif codigo == 401:
         print("Error 401: API Key inválida o no autorizada.")
         sys.exit(1)
