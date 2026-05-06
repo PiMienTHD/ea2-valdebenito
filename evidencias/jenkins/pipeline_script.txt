@@ -1,0 +1,9 @@
+node {
+   stage('Preparation') {
+       sh 'docker stop clima-ejecucion || true'
+       sh 'docker rm clima-ejecucion || true'
+   }
+   stage('Build') {
+       build 'SDN-EV2-Valdebenito'
+   }
+}
